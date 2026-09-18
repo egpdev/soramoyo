@@ -151,9 +151,16 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
             forecast = zip(zip(zip(daily.time, daily.temperatureMax), daily.temperatureMin), zip(daily.rainChance, daily.weatherCode)).map {
                 ForecastDay(date: $0.0.0.0, high: $0.0.0.1, low: $0.0.1, rainChance: $0.1.0, code: $0.1.1)
             }
+            let hourFormatter = DateFormatter()
+            hourFormatter.locale = Locale(identifier: "en_US_POSIX")
+            hourFormatter.timeZone = TimeZone.current
+            hourFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm"
             let now = Date()
             hourlyForecast = zip(zip(zip(response.hourly.time, response.hourly.temperature), response.hourly.rainChance), response.hourly.weatherCode)
-                .map { HourlyForecast(date: $0.0.0.0, temperature: $0.0.0.1, rainChance: $0.0.1, code: $0.1) }
+                .compactMap { raw, code in
+                    guard let date = hourFormatter.date(from: raw.0.0) else { return nil }
+                    return HourlyForecast(date: date, temperature: raw.0.1, rainChance: raw.1, code: code)
+                }
                 .filter { $0.date >= now.addingTimeInterval(-60 * 60) && Calendar.current.isDateInToday($0.date) }
             status = "Live conditions · updated now"
         } catch {
@@ -188,7 +195,7 @@ private struct OpenMeteoResponse: Decodable {
         }
     }
     struct Hourly: Decodable {
-        let time: [Date]
+        let time: [String]
         let temperature: [Double]
         let rainChance: [Int]
         let weatherCode: [Int]
