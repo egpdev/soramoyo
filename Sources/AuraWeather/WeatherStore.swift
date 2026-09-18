@@ -12,6 +12,7 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
     @Published private(set) var geminiNote: String?
     @Published private(set) var geminiStatus = "Local outfit advice is active"
     @Published private(set) var hasGeminiKey = false
+    @Published private(set) var locationSuggestions: [LocationSuggestion] = []
 
     private let locationManager = CLLocationManager()
     private let geocoder = CLGeocoder()
@@ -67,14 +68,27 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
         guard !trimmed.isEmpty else { return }
         Task {
             do {
-                guard let place = try await geocoder.geocodeAddressString(trimmed).first?.location else {
+                guard let placemark = try await geocoder.geocodeAddressString(trimmed).first, let place = placemark.location else {
                     status = "City not found"
                     return
                 }
-                let resolvedName = await cityName(for: place) ?? trimmed
+                let resolvedName = placeLabel(placemark, fallback: trimmed)
+                locationSuggestions = []
                 await refresh(latitude: place.coordinate.latitude, longitude: place.coordinate.longitude, city: resolvedName)
             } catch {
                 status = "City not found — try a more specific name"
+            }
+        }
+    }
+
+    func searchPlaces(matching input: String) {
+        let query = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { locationSuggestions = []; return }
+        Task {
+            let places = (try? await geocoder.geocodeAddressString(query)) ?? []
+            locationSuggestions = Array(places.prefix(5)).map { placemark in
+                let query = [placemark.name, placemark.locality, placemark.country].compactMap { $0 }.joined(separator: ", ")
+                return LocationSuggestion(title: placeLabel(placemark, fallback: input), query: query)
             }
         }
     }
@@ -99,7 +113,7 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
         geminiStatus = "Thinking about your outfit…"
         Task {
             do {
-                geminiNote = try await GeminiAdvisor().outfitNote(for: snapshot, apiKey: key)
+                geminiNote = try await GeminiAdvisor().outfitNote(for: snapshot, hourly: hourlyForecast, apiKey: key)
                 geminiStatus = "AI outfit note · city-level weather only"
             } catch {
                 if let urlError = error as? URLError, urlError.code == .timedOut {
@@ -114,6 +128,12 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
     private func cityName(for location: CLLocation) async -> String? {
         do { return try await geocoder.reverseGeocodeLocation(location).first?.locality }
         catch { return nil }
+    }
+
+    private func placeLabel(_ placemark: CLPlacemark, fallback: String) -> String {
+        let city = placemark.locality ?? placemark.administrativeArea
+        if let district = placemark.subLocality, let city, district.localizedCaseInsensitiveCompare(city) != .orderedSame { return "\(district) · \(city)" }
+        return city ?? placemark.name ?? fallback
     }
 
     private func refresh(latitude: Double, longitude: Double, city: String) async {
@@ -167,6 +187,12 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
             status = "Couldn’t refresh — showing the last conditions"
         }
     }
+}
+
+struct LocationSuggestion: Identifiable, Equatable {
+    let title: String
+    let query: String
+    var id: String { query }
 }
 
 private struct OpenMeteoResponse: Decodable {

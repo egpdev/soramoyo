@@ -6,17 +6,19 @@ struct ContentView: View {
     @EnvironmentObject private var weather: WeatherStore
     @State private var tab: AuraTab = .now
     @AppStorage("auraTemperatureUnit") private var unitRaw = TemperatureUnit.celsius.rawValue
+    @AppStorage("auraLanguage") private var languageRaw = AuraLanguage.german.rawValue
     private var unit: TemperatureUnit { TemperatureUnit(rawValue: unitRaw) ?? .celsius }
+    private var language: AuraLanguage { AuraLanguage(rawValue: languageRaw) ?? .german }
 
     var body: some View {
         HStack(spacing: 0) {
-            Sidebar(selection: $tab)
+            Sidebar(selection: $tab, language: language)
             Divider().overlay(Color.white.opacity(0.09))
             Group {
                 switch tab {
-                case .now: NowView(unit: unit, openSettings: { tab = .settings })
-                case .forecast: ForecastView(unit: unit)
-                case .settings: SettingsView(unitRaw: $unitRaw, openNow: { tab = .now })
+                case .now: NowView(unit: unit, language: language, openSettings: { tab = .settings })
+                case .forecast: ForecastView(unit: unit, language: language)
+                case .settings: SettingsView(unitRaw: $unitRaw, languageRaw: $languageRaw, language: language, openNow: { tab = .now })
                 }
             }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }.background(Color.black)
@@ -25,13 +27,14 @@ struct ContentView: View {
 
 private struct Sidebar: View {
     @Binding var selection: AuraTab
+    let language: AuraLanguage
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) { LiquidMark().frame(width: 32, height: 32); Text("AURA").font(.system(size: 17, weight: .bold, design: .rounded)).tracking(3) }
                 .padding(.top, 38).padding(.horizontal, 28)
             VStack(alignment: .leading, spacing: 13) {
                 ForEach([AuraTab.now, .forecast, .settings], id: \.rawValue) { item in
-                    Button { selection = item } label: { NavItem(icon: item == .now ? "cloud.sun" : item == .forecast ? "calendar" : "slider.horizontal.3", label: item.rawValue, active: selection == item) }.buttonStyle(.plain)
+                    Button { selection = item } label: { NavItem(icon: item == .now ? "cloud.sun" : item == .forecast ? "calendar" : "slider.horizontal.3", label: language.t(item == .now ? "now" : item == .forecast ? "forecast" : "settings"), active: selection == item) }.buttonStyle(.plain)
                 }
             }.padding(.top, 54).padding(.horizontal, 18)
             Spacer()
@@ -42,7 +45,7 @@ private struct Sidebar: View {
 
 private struct NowView: View {
     @EnvironmentObject private var weather: WeatherStore
-    let unit: TemperatureUnit; let openSettings: () -> Void
+    let unit: TemperatureUnit; let language: AuraLanguage; let openSettings: () -> Void
     @State private var showsDayPulse = false
     var body: some View { ScrollView { VStack(alignment: .leading, spacing: 26) { Header(); currentWeather; advice }.padding(42) } }
     private var currentWeather: some View {
@@ -128,12 +131,12 @@ private struct DayPulse: View {
 
 private struct ForecastView: View {
     @EnvironmentObject private var weather: WeatherStore
-    let unit: TemperatureUnit
+    let unit: TemperatureUnit; let language: AuraLanguage
     var days: [ForecastDay] { weather.forecast.isEmpty ? previewForecast : weather.forecast }
     var body: some View { ScrollView { VStack(alignment: .leading, spacing: 26) {
         Header(title: "Forecast", subtitle: "THE WEEK AHEAD")
         HStack(spacing: 12) { ForEach(days) { ForecastCell(day: $0, unit: unit) } }
-        VStack(alignment: .leading, spacing: 16) { Text("OUTSIDE CONDITIONS").micro(); HStack(spacing: 12) { MetricCard(label: "FEELS LIKE", value: weather.snapshot.temperatureText(weather.snapshot.feelsLike, unit: unit), icon: "thermometer.medium"); MetricCard(label: "RAIN CHANCE", value: "\(weather.snapshot.rainChance)%", icon: "drop.fill"); MetricCard(label: "WIND", value: "\(Int(weather.snapshot.windSpeed.rounded())) km/h", icon: "wind") } }.padding(25).glassPanel()
+        VStack(alignment: .leading, spacing: 16) { Text(language.t("outside")).micro(); HStack(spacing: 12) { MetricCard(label: language.t("feelsLike"), value: weather.snapshot.temperatureText(weather.snapshot.feelsLike, unit: unit), icon: "thermometer.medium"); MetricCard(label: weather.snapshot.precipitation > 0 ? language.t("rainPeak") : language.t("nowDry"), value: weather.snapshot.precipitation > 0 ? "\(weather.snapshot.rainChance)%" : "0 mm", icon: "drop.fill"); MetricCard(label: language.t("wind"), value: "\(Int(weather.snapshot.windSpeed.rounded())) km/h", icon: "wind") }; Text(weather.snapshot.precipitation > 0 ? language.t("rainPeak") : "\(weather.snapshot.rainChance)% · \(language.t("probability"))").muted() }.padding(25).glassPanel()
         Text("Forecast refreshes whenever you use your location or set a city in Settings.").muted()
     }.padding(42) } }
     private var previewForecast: [ForecastDay] { (0..<5).compactMap { offset in Calendar.current.date(byAdding: .day, value: offset, to: .now).map { ForecastDay(date: $0, high: 18 + Double(offset), low: 10, rainChance: 15, code: offset == 2 ? 61 : 2) } } }
@@ -141,12 +144,13 @@ private struct ForecastView: View {
 
 private struct SettingsView: View {
     @EnvironmentObject private var weather: WeatherStore
-    @Binding var unitRaw: String; let openNow: () -> Void
+    @Binding var unitRaw: String; @Binding var languageRaw: String; let language: AuraLanguage; let openNow: () -> Void
     @State private var city = ""; @State private var key = ""
     var body: some View { ScrollView { VStack(alignment: .leading, spacing: 23) {
         Header(title: "Settings", subtitle: "MAKE IT YOURS")
-        VStack(alignment: .leading, spacing: 15) { Text("LOCATION").micro(); Text("Use the Mac’s location or choose a city yourself.").muted(); HStack { TextField("e.g. Berlin, Germany", text: $city).textFieldStyle(.plain).padding(12).background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10)); Button("Use city") { weather.useCity(named: city) }.buttonStyle(AuraButtonStyle()); Button("Use my location") { weather.requestCurrentLocation() }.buttonStyle(AuraSecondaryButtonStyle()) } }.padding(24).glassPanel()
-        VStack(alignment: .leading, spacing: 15) { Text("UNITS").micro(); Picker("Temperature", selection: $unitRaw) { ForEach(TemperatureUnit.allCases) { Text($0.label).tag($0.rawValue) } }.pickerStyle(.segmented) }.padding(24).glassPanel()
+        VStack(alignment: .leading, spacing: 10) { Text(language.t("location")).micro(); Text(language.t("placeHelp")).muted(); HStack { TextField(language.t("placeHint"), text: $city).textFieldStyle(.plain).padding(12).background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10)).onChange(of: city) { weather.searchPlaces(matching: $0) }; Button(language.t("usePlace")) { weather.useCity(named: city) }.buttonStyle(AuraButtonStyle()); Button(language.t("useLocation")) { weather.requestCurrentLocation() }.buttonStyle(AuraSecondaryButtonStyle()) }; ForEach(weather.locationSuggestions) { suggestion in Button { city = suggestion.query; weather.useCity(named: suggestion.query) } label: { HStack { Image(systemName: "mappin.and.ellipse").foregroundStyle(Color.ice); Text(suggestion.title); Spacer() }.font(.system(size: 13, weight: .medium)).padding(10).background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 9)) }.buttonStyle(.plain) } }.padding(24).glassPanel()
+        VStack(alignment: .leading, spacing: 15) { Text(language.t("units")).micro(); Picker("Temperature", selection: $unitRaw) { ForEach(TemperatureUnit.allCases) { Text($0.label).tag($0.rawValue) } }.pickerStyle(.segmented) }.padding(24).glassPanel()
+        VStack(alignment: .leading, spacing: 15) { Text(language.t("language")).micro(); Picker("Language", selection: $languageRaw) { ForEach(AuraLanguage.allCases) { Text($0.label).tag($0.rawValue) } }.pickerStyle(.segmented) }.padding(24).glassPanel()
         VStack(alignment: .leading, spacing: 13) { Text("GEMINI OUTFIT ADVICE").micro(); Text("Optional. Asking Gemini sends city-level weather values only — never your exact coordinates. The key is saved in macOS Keychain, never in the project.").muted(); HStack { SecureField(weather.hasGeminiKey ? "Key saved — enter a new one to replace it" : "Paste Gemini API key", text: $key).textFieldStyle(.plain).padding(12).background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10)); Button("Save key") { weather.saveGeminiKey(key); key = "" }.buttonStyle(AuraButtonStyle()).disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) }; Text(weather.geminiStatus).font(.system(size: 12)).foregroundStyle(.white.opacity(0.44)) }.padding(24).glassPanel()
         HStack { Spacer(); Button("Back to Now") { openNow() }.buttonStyle(AuraSecondaryButtonStyle()) }
     }.padding(42) } }
