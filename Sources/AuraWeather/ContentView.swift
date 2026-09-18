@@ -43,14 +43,35 @@ private struct Sidebar: View {
 private struct NowView: View {
     @EnvironmentObject private var weather: WeatherStore
     let unit: TemperatureUnit; let openSettings: () -> Void
+    @State private var showsDayPulse = false
     var body: some View { ScrollView { VStack(alignment: .leading, spacing: 26) { Header(); currentWeather; advice }.padding(42) } }
     private var currentWeather: some View {
-        HStack(spacing: 28) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline, spacing: 5) { Text(weather.snapshot.temperatureText(weather.snapshot.temperature, unit: unit).dropLast()).font(.system(size: 116, weight: .ultraLight, design: .rounded)); Text(unit == .celsius ? "°C" : "°F").font(.system(size: 22, weight: .medium)).foregroundStyle(.white.opacity(0.55)) }
-                Label(weather.snapshot.condition, systemImage: weather.snapshot.symbol).font(.system(size: 16, weight: .medium)).foregroundStyle(Color.ice)
-                Text("H \(weather.snapshot.temperatureText(weather.snapshot.high, unit: unit))  ·  L \(weather.snapshot.temperatureText(weather.snapshot.low, unit: unit))").font(.system(size: 14, design: .monospaced)).foregroundStyle(.white.opacity(0.48))
-            }; Spacer(minLength: 20); LiquidWeatherWidget(snapshot: weather.snapshot, unit: unit).frame(width: 250, height: 250)
+        ZStack(alignment: .topTrailing) {
+            HStack(spacing: 28) {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .firstTextBaseline, spacing: 5) { Text(weather.snapshot.temperatureText(weather.snapshot.temperature, unit: unit).dropLast()).font(.system(size: 116, weight: .ultraLight, design: .rounded)); Text(unit == .celsius ? "°C" : "°F").font(.system(size: 22, weight: .medium)).foregroundStyle(.white.opacity(0.55)) }
+                    Label(weather.snapshot.condition, systemImage: weather.snapshot.symbol).font(.system(size: 16, weight: .medium)).foregroundStyle(Color.ice)
+                    Text("H \(weather.snapshot.temperatureText(weather.snapshot.high, unit: unit))  ·  L \(weather.snapshot.temperatureText(weather.snapshot.low, unit: unit))").font(.system(size: 14, design: .monospaced)).foregroundStyle(.white.opacity(0.48))
+                }
+                Spacer(minLength: 20)
+                Button {
+                    withAnimation(.spring(response: 0.42, dampingFraction: 0.72)) { showsDayPulse.toggle() }
+                } label: {
+                    LiquidWeatherWidget(snapshot: weather.snapshot, unit: unit)
+                        .frame(width: 250, height: 250)
+                        .scaleEffect(showsDayPulse ? 1.035 : 1)
+                        .shadow(color: Color.ice.opacity(showsDayPulse ? 0.34 : 0.18), radius: showsDayPulse ? 42 : 28)
+                }.buttonStyle(.plain).accessibilityLabel("Open today’s weather")
+            }
+            if showsDayPulse {
+                DayPulse(snapshot: weather.snapshot, hours: weather.hourlyForecast, unit: unit) {
+                    withAnimation(.spring(response: 0.36, dampingFraction: 0.78)) { showsDayPulse = false }
+                }
+                .frame(width: 292)
+                .offset(x: -232, y: 22)
+                .transition(.asymmetric(insertion: .scale(scale: 0.82, anchor: .bottomTrailing).combined(with: .opacity), removal: .scale(scale: 0.92, anchor: .bottomTrailing).combined(with: .opacity)))
+                .zIndex(3)
+            }
         }.padding(34).glassPanel()
     }
     private var advice: some View {
@@ -64,6 +85,44 @@ private struct NowView: View {
             Divider().overlay(Color.white.opacity(0.09))
             HStack { Text(weather.geminiStatus).font(.system(size: 12)).foregroundStyle(.white.opacity(0.44)); Spacer(); if weather.hasGeminiKey { Button("Ask Gemini") { weather.generateGeminiAdvice() }.buttonStyle(AuraButtonStyle()) } else { Button("Enable Gemini") { openSettings() }.buttonStyle(AuraButtonStyle()) } }
         }.padding(24).glassPanel()
+    }
+}
+
+private struct DayPulse: View {
+    let snapshot: WeatherSnapshot
+    let hours: [HourlyForecast]
+    let unit: TemperatureUnit
+    let dismiss: () -> Void
+
+    private var visibleHours: [HourlyForecast] { Array(hours.prefix(4)) }
+    private var summary: String {
+        let rain = snapshot.rainChance >= 35 ? "Rain is likely later today." : "Rain is unlikely today."
+        return "Mild now, reaching \(snapshot.temperatureText(snapshot.high, unit: unit)). \(rain)"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack { Text("DAY PULSE").micro(); Spacer(); Button(action: dismiss) { Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).frame(width: 24, height: 24).background(.white.opacity(0.10), in: Circle()) }.buttonStyle(.plain) }
+            Text(summary).font(.system(size: 14, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.9)).fixedSize(horizontal: false, vertical: true)
+            if visibleHours.isEmpty {
+                Text("Hourly detail will appear after the next refresh.").muted()
+            } else {
+                ForEach(visibleHours) { hour in
+                    HStack(spacing: 10) {
+                        Text(hour.date.formatted(.dateTime.hour(.defaultDigits(amPM: .abbreviated)))).font(.system(size: 11, design: .monospaced)).frame(width: 42, alignment: .leading).foregroundStyle(.white.opacity(0.5))
+                        Image(systemName: hour.symbol).font(.system(size: 13)).foregroundStyle(Color.ice).frame(width: 17)
+                        Text(hour.condition).font(.system(size: 12)).foregroundStyle(.white.opacity(0.7))
+                        Spacer()
+                        Text(snapshot.temperatureText(hour.temperature, unit: unit)).font(.system(size: 12, weight: .semibold, design: .rounded))
+                        if hour.rainChance > 0 { Text("\(hour.rainChance)%").font(.system(size: 10, design: .monospaced)).foregroundStyle(.white.opacity(0.45)) }
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .background(.black.opacity(0.88), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.ice.opacity(0.32), lineWidth: 1))
+        .shadow(color: .black.opacity(0.55), radius: 24, y: 12)
     }
 }
 

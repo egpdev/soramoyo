@@ -64,6 +64,22 @@ struct ForecastDay: Identifiable, Equatable, Codable {
     var id: Date { date }
 }
 
+struct HourlyForecast: Identifiable, Equatable, Codable {
+    let date: Date
+    let temperature: Double
+    let rainChance: Int
+    let code: Int
+    var id: Date { date }
+
+    var condition: String {
+        WeatherSnapshot(city: "", temperature: temperature, feelsLike: temperature, precipitation: 0, windSpeed: 0, code: code, high: temperature, low: temperature, rainChance: rainChance).condition
+    }
+
+    var symbol: String {
+        WeatherSnapshot(city: "", temperature: temperature, feelsLike: temperature, precipitation: 0, windSpeed: 0, code: code, high: temperature, low: temperature, rainChance: rainChance).symbol
+    }
+}
+
 struct OutfitAdvice: Equatable, Codable {
     let headline: String
     let detail: String

@@ -6,6 +6,7 @@ import Foundation
 final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published private(set) var snapshot: WeatherSnapshot = .preview
     @Published private(set) var forecast: [ForecastDay] = []
+    @Published private(set) var hourlyForecast: [HourlyForecast] = []
     @Published private(set) var isLoading = false
     @Published private(set) var status = "Using Berlin as a preview"
     @Published private(set) var geminiNote: String?
@@ -125,6 +126,7 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
                 .init(name: "longitude", value: String(longitude)),
                 .init(name: "current", value: "temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m"),
                 .init(name: "daily", value: "temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code"),
+                .init(name: "hourly", value: "temperature_2m,precipitation_probability,weather_code"),
                 .init(name: "forecast_days", value: "5"),
                 .init(name: "timezone", value: "auto")
             ]
@@ -149,6 +151,10 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
             forecast = zip(zip(zip(daily.time, daily.temperatureMax), daily.temperatureMin), zip(daily.rainChance, daily.weatherCode)).map {
                 ForecastDay(date: $0.0.0.0, high: $0.0.0.1, low: $0.0.1, rainChance: $0.1.0, code: $0.1.1)
             }
+            let now = Date()
+            hourlyForecast = zip(zip(zip(response.hourly.time, response.hourly.temperature), response.hourly.rainChance), response.hourly.weatherCode)
+                .map { HourlyForecast(date: $0.0.0.0, temperature: $0.0.0.1, rainChance: $0.0.1, code: $0.1) }
+                .filter { $0.date >= now.addingTimeInterval(-60 * 60) && Calendar.current.isDateInToday($0.date) }
             status = "Live conditions · updated now"
         } catch {
             status = "Couldn’t refresh — showing the last conditions"
@@ -181,4 +187,14 @@ private struct OpenMeteoResponse: Decodable {
             case rainChance = "precipitation_probability_max", weatherCode = "weather_code"
         }
     }
+    struct Hourly: Decodable {
+        let time: [Date]
+        let temperature: [Double]
+        let rainChance: [Int]
+        let weatherCode: [Int]
+        enum CodingKeys: String, CodingKey {
+            case time, temperature = "temperature_2m", rainChance = "precipitation_probability", weatherCode = "weather_code"
+        }
+    }
+    let hourly: Hourly
 }
