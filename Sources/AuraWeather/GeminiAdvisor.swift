@@ -1,10 +1,10 @@
 import Foundation
 
 struct GeminiAdvisor {
-    func outfitNote(for weather: WeatherSnapshot, hourly: [HourlyForecast], apiKey: String) async throws -> String {
+    func outfitNote(for weather: WeatherSnapshot, hourly: [HourlyForecast], language: AuraLanguage, apiKey: String) async throws -> String {
         let nextHours = hourly.prefix(6).map { "\($0.date.formatted(.dateTime.hour())): \(Int($0.temperature.rounded()))C, \($0.rainChance)% precipitation" }.joined(separator: "; ")
         let prompt = """
-        You are a concise personal weather stylist. Based only on this local weather summary, give one practical outfit recommendation in English. Keep it under 45 words. No greetings or emojis. Area: \(weather.city). Current condition: \(weather.condition). Temperature: \(Int(weather.temperature.rounded()))C, feels like \(Int(weather.feelsLike.rounded()))C, wind \(Int(weather.windSpeed.rounded())) km/h. Peak rain probability today: \(weather.rainChance)%. Next hours: \(nextHours). A probability is not rain happening now; mention this if rain is relevant.
+        You are a concise personal weather stylist. Based only on this local weather summary, give one practical outfit recommendation in \(language == .russian ? "Russian" : language == .german ? "German" : "English"). Keep it under 45 words. No greetings or emojis. Area: \(weather.city). Current condition: \(weather.condition). Temperature: \(Int(weather.temperature.rounded()))C, feels like \(Int(weather.feelsLike.rounded()))C, wind \(Int(weather.windSpeed.rounded())) km/h. Peak rain probability today: \(weather.rainChance)%. Next hours: \(nextHours). A probability is not rain happening now; mention this if rain is relevant.
         """
         // Gemini 2.5 Flash is no longer available to newly created API keys.
         // 3.6 Flash is the current fast text model exposed for this key.

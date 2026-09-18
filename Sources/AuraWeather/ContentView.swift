@@ -82,11 +82,11 @@ private struct NowView: View {
         return VStack(alignment: .leading, spacing: 17) {
             HStack(alignment: .top, spacing: 20) {
                 Image(systemName: "sparkles").font(.system(size: 19, weight: .medium)).foregroundStyle(Color.ice).frame(width: 42, height: 42).background(Color.ice.opacity(0.16), in: Circle())
-                VStack(alignment: .leading, spacing: 7) { Text(weather.geminiNote == nil ? "WHAT TO WEAR" : "AURA AI NOTE").micro(); Text(weather.geminiNote ?? local.headline).font(.system(size: 22, weight: .medium, design: .rounded)); Text(weather.geminiNote ?? local.detail).font(.system(size: 14)).foregroundStyle(.white.opacity(0.57)) }
+                VStack(alignment: .leading, spacing: 7) { Text(weather.geminiNote == nil ? "WHAT TO WEAR" : "AURA AI NOTE").micro(); Text(weather.geminiNote ?? local.headline).font(.system(size: 22, weight: .medium, design: .rounded)); if weather.geminiNote == nil { Text(local.detail).font(.system(size: 14)).foregroundStyle(.white.opacity(0.57)) } }
                 Spacer(); if weather.geminiNote == nil { VStack(alignment: .trailing, spacing: 8) { ForEach(local.items, id: \.self) { Tag(text: $0) } } }
             }
             Divider().overlay(Color.white.opacity(0.09))
-            HStack { Text(weather.geminiStatus).font(.system(size: 12)).foregroundStyle(.white.opacity(0.44)); Spacer(); if weather.hasGeminiKey { Button("Ask Gemini") { weather.generateGeminiAdvice() }.buttonStyle(AuraButtonStyle()) } else { Button("Enable Gemini") { openSettings() }.buttonStyle(AuraButtonStyle()) } }
+            HStack { Text(weather.geminiStatus).font(.system(size: 12)).foregroundStyle(.white.opacity(0.44)); Spacer(); if weather.hasGeminiKey { Button("Ask Gemini") { weather.generateGeminiAdvice(language: language) }.buttonStyle(AuraButtonStyle()) } else { Button("Enable Gemini") { openSettings() }.buttonStyle(AuraButtonStyle()) } }
         }.padding(24).glassPanel()
     }
 }

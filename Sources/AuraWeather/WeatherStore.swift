@@ -105,7 +105,7 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
         }
     }
 
-    func generateGeminiAdvice() {
+    func generateGeminiAdvice(language: AuraLanguage) {
         guard let key = cachedGeminiKey ?? KeychainStore.geminiKey(), !key.isEmpty else {
             geminiStatus = "Add a Gemini API key in Settings first"
             return
@@ -113,7 +113,7 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
         geminiStatus = "Thinking about your outfit…"
         Task {
             do {
-                geminiNote = try await GeminiAdvisor().outfitNote(for: snapshot, hourly: hourlyForecast, apiKey: key)
+                geminiNote = try await GeminiAdvisor().outfitNote(for: snapshot, hourly: hourlyForecast, language: language, apiKey: key)
                 geminiStatus = "AI outfit note · city-level weather only"
             } catch {
                 if let urlError = error as? URLError, urlError.code == .timedOut {
