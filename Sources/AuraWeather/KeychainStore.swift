@@ -19,6 +19,15 @@ enum KeychainStore {
         return String(data: data, encoding: .utf8)
     }
 
+    static func hasGeminiKey() -> Bool {
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(
+            query.merging([kSecReturnAttributes as String: true]) { _, new in new } as CFDictionary,
+            &result
+        )
+        return status == errSecSuccess
+    }
+
     private static var query: [String: Any] {
         [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
     }

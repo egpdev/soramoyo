@@ -18,8 +18,10 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
 
     override init() {
         super.init()
-        cachedGeminiKey = KeychainStore.geminiKey()
-        hasGeminiKey = cachedGeminiKey != nil
+        // Do not read secret data while the app is launching: macOS cannot show a
+        // Keychain authorization sheet before the window is active. Metadata is safe
+        // to inspect here; the secret itself is requested only after the user taps Ask.
+        hasGeminiKey = KeychainStore.hasGeminiKey()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyKilometer
         Task { await refresh(latitude: 52.52, longitude: 13.405, city: "Berlin") }
