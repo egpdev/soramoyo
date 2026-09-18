@@ -1,6 +1,12 @@
 import Foundation
 
-struct WeatherSnapshot: Equatable {
+enum TemperatureUnit: String, CaseIterable, Identifiable {
+    case celsius, fahrenheit
+    var id: String { rawValue }
+    var label: String { self == .celsius ? "Celsius · °C" : "Fahrenheit · °F" }
+}
+
+struct WeatherSnapshot: Equatable, Codable {
     let city: String
     let temperature: Double
     let feelsLike: Double
@@ -42,9 +48,14 @@ struct WeatherSnapshot: Equatable {
         default: return "cloud.fill"
         }
     }
+
+    func temperatureText(_ value: Double, unit: TemperatureUnit) -> String {
+        let converted = unit == .celsius ? value : (value * 9 / 5) + 32
+        return "\(Int(converted.rounded()))°"
+    }
 }
 
-struct ForecastDay: Identifiable, Equatable {
+struct ForecastDay: Identifiable, Equatable, Codable {
     let date: Date
     let high: Double
     let low: Double
@@ -53,7 +64,7 @@ struct ForecastDay: Identifiable, Equatable {
     var id: Date { date }
 }
 
-struct OutfitAdvice: Equatable {
+struct OutfitAdvice: Equatable, Codable {
     let headline: String
     let detail: String
     let items: [String]

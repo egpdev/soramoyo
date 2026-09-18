@@ -8,6 +8,9 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
     @Published private(set) var forecast: [ForecastDay] = []
     @Published private(set) var isLoading = false
     @Published private(set) var status = "Using Berlin as a preview"
+    @Published private(set) var geminiNote: String?
+    @Published private(set) var geminiStatus = "Local outfit advice is active"
+    @Published private(set) var hasGeminiKey = KeychainStore.geminiKey() != nil
 
     private let locationManager = CLLocationManager()
     private let geocoder = CLGeocoder()
@@ -51,6 +54,49 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
 
     func refreshCurrentWeather() {
         requestCurrentLocation()
+    }
+
+    func useCity(named name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        Task {
+            do {
+                guard let place = try await geocoder.geocodeAddressString(trimmed).first?.location else {
+                    status = "City not found"
+                    return
+                }
+                let resolvedName = await cityName(for: place) ?? trimmed
+                await refresh(latitude: place.coordinate.latitude, longitude: place.coordinate.longitude, city: resolvedName)
+            } catch {
+                status = "City not found — try a more specific name"
+            }
+        }
+    }
+
+    func saveGeminiKey(_ key: String) {
+        do {
+            try KeychainStore.saveGeminiKey(key.trimmingCharacters(in: .whitespacesAndNewlines))
+            hasGeminiKey = true
+            geminiStatus = "Gemini is ready — your key is in macOS Keychain"
+        } catch {
+            geminiStatus = "Couldn’t save the Gemini key"
+        }
+    }
+
+    func generateGeminiAdvice() {
+        guard let key = KeychainStore.geminiKey(), !key.isEmpty else {
+            geminiStatus = "Add a Gemini API key in Settings first"
+            return
+        }
+        geminiStatus = "Thinking about your outfit…"
+        Task {
+            do {
+                geminiNote = try await GeminiAdvisor().outfitNote(for: snapshot, apiKey: key)
+                geminiStatus = "AI outfit note · city-level weather only"
+            } catch {
+                geminiStatus = error.localizedDescription
+            }
+        }
     }
 
     private func cityName(for location: CLLocation) async -> String? {

@@ -1,216 +1,111 @@
 import SwiftUI
 
+private enum AuraTab: String { case now = "Now", forecast = "Forecast", settings = "Settings" }
+
 struct ContentView: View {
     @EnvironmentObject private var weather: WeatherStore
+    @State private var tab: AuraTab = .now
+    @AppStorage("auraTemperatureUnit") private var unitRaw = TemperatureUnit.celsius.rawValue
+    private var unit: TemperatureUnit { TemperatureUnit(rawValue: unitRaw) ?? .celsius }
 
     var body: some View {
         HStack(spacing: 0) {
-            Sidebar()
+            Sidebar(selection: $tab)
             Divider().overlay(Color.white.opacity(0.09))
-            mainContent
-        }
-        .background(Color.black)
-    }
-
-    private var mainContent: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 26) {
-                header
-                currentWeather
-                advice
-                forecast
-            }
-            .padding(42)
-        }
-    }
-
-    private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 7) {
-                Text("WEATHER, MADE QUIET")
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                    .tracking(2.5)
-                    .foregroundStyle(.white.opacity(0.46))
-                Text(weather.snapshot.city)
-                    .font(.system(size: 34, weight: .medium, design: .rounded))
-                HStack(spacing: 7) {
-                    Circle().fill(Color(red: 0.62, green: 0.81, blue: 0.96)).frame(width: 7, height: 7)
-                    Text(weather.status)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.white.opacity(0.52))
+            Group {
+                switch tab {
+                case .now: NowView(unit: unit, openSettings: { tab = .settings })
+                case .forecast: ForecastView(unit: unit)
+                case .settings: SettingsView(unitRaw: $unitRaw, openNow: { tab = .now })
                 }
-            }
-            Spacer()
-            Button(action: weather.refreshCurrentWeather) {
-                Image(systemName: weather.isLoading ? "arrow.triangle.2.circlepath" : "location.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .frame(width: 40, height: 40)
-                    .background(.white.opacity(0.10), in: Circle())
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.white)
-            .rotationEffect(.degrees(weather.isLoading ? 360 : 0))
-            .animation(weather.isLoading ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: weather.isLoading)
-        }
-    }
-
-    private var currentWeather: some View {
-        HStack(spacing: 28) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline, spacing: 5) {
-                    Text("\(Int(weather.snapshot.temperature.rounded()))")
-                        .font(.system(size: 116, weight: .ultraLight, design: .rounded))
-                    Text("°C").font(.system(size: 22, weight: .medium)).foregroundStyle(.white.opacity(0.55))
-                }
-                Label(weather.snapshot.condition, systemImage: weather.snapshot.symbol)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(Color(red: 0.70, green: 0.84, blue: 0.95))
-                Text("H \(Int(weather.snapshot.high.rounded()))°  ·  L \(Int(weather.snapshot.low.rounded()))°")
-                    .font(.system(size: 14, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.48))
-            }
-            Spacer(minLength: 20)
-            LiquidWeatherWidget(snapshot: weather.snapshot)
-                .frame(width: 250, height: 250)
-        }
-        .padding(34)
-        .glassPanel()
-    }
-
-    private var advice: some View {
-        let outfit = OutfitEngine.advice(for: weather.snapshot)
-        return HStack(alignment: .top, spacing: 20) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 19, weight: .medium))
-                .foregroundStyle(Color(red: 0.69, green: 0.84, blue: 0.96))
-                .frame(width: 42, height: 42)
-                .background(Color(red: 0.45, green: 0.67, blue: 0.87).opacity(0.17), in: Circle())
-            VStack(alignment: .leading, spacing: 7) {
-                Text("WHAT TO WEAR")
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
-                    .tracking(1.8)
-                    .foregroundStyle(.white.opacity(0.45))
-                Text(outfit.headline).font(.system(size: 22, weight: .medium, design: .rounded))
-                Text(outfit.detail).font(.system(size: 14)).foregroundStyle(.white.opacity(0.57))
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 8) {
-                ForEach(outfit.items, id: \.self) { item in
-                    Text(item).font(.system(size: 13, weight: .medium))
-                        .padding(.horizontal, 12).padding(.vertical, 7)
-                        .background(.white.opacity(0.09), in: Capsule())
-                }
-            }
-        }
-        .padding(24)
-        .glassPanel()
-    }
-
-    private var forecast: some View {
-        VStack(alignment: .leading, spacing: 15) {
-            Text("NEXT FIVE DAYS")
-                .font(.system(size: 11, weight: .bold, design: .monospaced)).tracking(1.8).foregroundStyle(.white.opacity(0.45))
-            HStack(spacing: 10) {
-                ForEach(weather.forecast.isEmpty ? previewForecast : weather.forecast) { day in
-                    ForecastCell(day: day)
-                }
-            }
-        }
-    }
-
-    private var previewForecast: [ForecastDay] {
-        (0..<5).compactMap { offset in
-            Calendar.current.date(byAdding: .day, value: offset, to: .now).map { ForecastDay(date: $0, high: 18 + Double(offset), low: 10, rainChance: 15, code: offset == 2 ? 61 : 2) }
-        }
+            }.frame(maxWidth: .infinity, maxHeight: .infinity)
+        }.background(Color.black)
     }
 }
 
 private struct Sidebar: View {
+    @Binding var selection: AuraTab
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 10) {
-                LiquidMark().frame(width: 32, height: 32)
-                Text("AURA").font(.system(size: 17, weight: .bold, design: .rounded)).tracking(3)
-            }
-            .padding(.top, 38).padding(.horizontal, 28)
+            HStack(spacing: 10) { LiquidMark().frame(width: 32, height: 32); Text("AURA").font(.system(size: 17, weight: .bold, design: .rounded)).tracking(3) }
+                .padding(.top, 38).padding(.horizontal, 28)
             VStack(alignment: .leading, spacing: 13) {
-                NavItem(icon: "cloud.sun", label: "Now", active: true)
-                NavItem(icon: "calendar", label: "Forecast", active: false)
-                NavItem(icon: "slider.horizontal.3", label: "Settings", active: false)
-            }
-            .padding(.top, 54).padding(.horizontal, 18)
+                ForEach([AuraTab.now, .forecast, .settings], id: \.rawValue) { item in
+                    Button { selection = item } label: { NavItem(icon: item == .now ? "cloud.sun" : item == .forecast ? "calendar" : "slider.horizontal.3", label: item.rawValue, active: selection == item) }.buttonStyle(.plain)
+                }
+            }.padding(.top, 54).padding(.horizontal, 18)
             Spacer()
-            VStack(alignment: .leading, spacing: 7) {
-                Text("LOCAL WEATHER").font(.system(size: 10, weight: .bold, design: .monospaced)).tracking(1.4)
-                Text("Location stays on this Mac.").font(.system(size: 11)).foregroundStyle(.white.opacity(0.42))
+            VStack(alignment: .leading, spacing: 7) { Text("LOCAL WEATHER").micro(); Text("Location stays on this Mac.").muted() }.padding(28)
+        }.frame(width: 210).background(Color.white.opacity(0.025))
+    }
+}
+
+private struct NowView: View {
+    @EnvironmentObject private var weather: WeatherStore
+    let unit: TemperatureUnit; let openSettings: () -> Void
+    var body: some View { ScrollView { VStack(alignment: .leading, spacing: 26) { Header(); currentWeather; advice }.padding(42) } }
+    private var currentWeather: some View {
+        HStack(spacing: 28) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline, spacing: 5) { Text(weather.snapshot.temperatureText(weather.snapshot.temperature, unit: unit).dropLast()).font(.system(size: 116, weight: .ultraLight, design: .rounded)); Text(unit == .celsius ? "°C" : "°F").font(.system(size: 22, weight: .medium)).foregroundStyle(.white.opacity(0.55)) }
+                Label(weather.snapshot.condition, systemImage: weather.snapshot.symbol).font(.system(size: 16, weight: .medium)).foregroundStyle(Color.ice)
+                Text("H \(weather.snapshot.temperatureText(weather.snapshot.high, unit: unit))  ·  L \(weather.snapshot.temperatureText(weather.snapshot.low, unit: unit))").font(.system(size: 14, design: .monospaced)).foregroundStyle(.white.opacity(0.48))
+            }; Spacer(minLength: 20); LiquidWeatherWidget(snapshot: weather.snapshot, unit: unit).frame(width: 250, height: 250)
+        }.padding(34).glassPanel()
+    }
+    private var advice: some View {
+        let local = OutfitEngine.advice(for: weather.snapshot)
+        return VStack(alignment: .leading, spacing: 17) {
+            HStack(alignment: .top, spacing: 20) {
+                Image(systemName: "sparkles").font(.system(size: 19, weight: .medium)).foregroundStyle(Color.ice).frame(width: 42, height: 42).background(Color.ice.opacity(0.16), in: Circle())
+                VStack(alignment: .leading, spacing: 7) { Text(weather.geminiNote == nil ? "WHAT TO WEAR" : "AURA AI NOTE").micro(); Text(weather.geminiNote ?? local.headline).font(.system(size: 22, weight: .medium, design: .rounded)); Text(weather.geminiNote ?? local.detail).font(.system(size: 14)).foregroundStyle(.white.opacity(0.57)) }
+                Spacer(); if weather.geminiNote == nil { VStack(alignment: .trailing, spacing: 8) { ForEach(local.items, id: \.self) { Tag(text: $0) } } }
             }
-            .padding(28)
-        }
-        .frame(width: 210)
-        .background(Color.white.opacity(0.025))
+            Divider().overlay(Color.white.opacity(0.09))
+            HStack { Text(weather.geminiStatus).font(.system(size: 12)).foregroundStyle(.white.opacity(0.44)); Spacer(); if weather.hasGeminiKey { Button("Ask Gemini") { weather.generateGeminiAdvice() }.buttonStyle(AuraButtonStyle()) } else { Button("Enable Gemini") { openSettings() }.buttonStyle(AuraButtonStyle()) } }
+        }.padding(24).glassPanel()
     }
 }
 
-private struct NavItem: View {
-    let icon: String; let label: String; let active: Bool
-    var body: some View {
-        Label(label, systemImage: icon).font(.system(size: 14, weight: active ? .semibold : .medium))
-            .foregroundStyle(active ? .white : .white.opacity(0.52))
-            .padding(.horizontal, 13).padding(.vertical, 10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(active ? .white.opacity(0.10) : .clear, in: RoundedRectangle(cornerRadius: 11))
-    }
+private struct ForecastView: View {
+    @EnvironmentObject private var weather: WeatherStore
+    let unit: TemperatureUnit
+    var days: [ForecastDay] { weather.forecast.isEmpty ? previewForecast : weather.forecast }
+    var body: some View { ScrollView { VStack(alignment: .leading, spacing: 26) {
+        Header(title: "Forecast", subtitle: "THE WEEK AHEAD")
+        HStack(spacing: 12) { ForEach(days) { ForecastCell(day: $0, unit: unit) } }
+        VStack(alignment: .leading, spacing: 16) { Text("OUTSIDE CONDITIONS").micro(); HStack(spacing: 12) { MetricCard(label: "FEELS LIKE", value: weather.snapshot.temperatureText(weather.snapshot.feelsLike, unit: unit), icon: "thermometer.medium"); MetricCard(label: "RAIN CHANCE", value: "\(weather.snapshot.rainChance)%", icon: "drop.fill"); MetricCard(label: "WIND", value: "\(Int(weather.snapshot.windSpeed.rounded())) km/h", icon: "wind") } }.padding(25).glassPanel()
+        Text("Forecast refreshes whenever you use your location or set a city in Settings.").muted()
+    }.padding(42) } }
+    private var previewForecast: [ForecastDay] { (0..<5).compactMap { offset in Calendar.current.date(byAdding: .day, value: offset, to: .now).map { ForecastDay(date: $0, high: 18 + Double(offset), low: 10, rainChance: 15, code: offset == 2 ? 61 : 2) } } }
 }
 
-private struct ForecastCell: View {
-    let day: ForecastDay
-    var body: some View {
-        VStack(spacing: 13) {
-            Text(day.date.formatted(.dateTime.weekday(.narrow))).font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundStyle(.white.opacity(0.54))
-            Image(systemName: WeatherSnapshot.preview.code == day.code ? "cloud.sun.fill" : WeatherSnapshot(city: "", temperature: 0, feelsLike: 0, precipitation: 0, windSpeed: 0, code: day.code, high: 0, low: 0, rainChance: 0).symbol)
-                .font(.system(size: 19)).foregroundStyle(Color(red: 0.69, green: 0.84, blue: 0.96))
-            Text("\(Int(day.high.rounded()))°").font(.system(size: 16, weight: .semibold, design: .rounded))
-            Text("\(Int(day.low.rounded()))°").font(.system(size: 12)).foregroundStyle(.white.opacity(0.42))
-        }
-        .frame(maxWidth: .infinity).padding(.vertical, 17)
-        .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 16))
-    }
+private struct SettingsView: View {
+    @EnvironmentObject private var weather: WeatherStore
+    @Binding var unitRaw: String; let openNow: () -> Void
+    @State private var city = ""; @State private var key = ""
+    var body: some View { ScrollView { VStack(alignment: .leading, spacing: 23) {
+        Header(title: "Settings", subtitle: "MAKE IT YOURS")
+        VStack(alignment: .leading, spacing: 15) { Text("LOCATION").micro(); Text("Use the Mac’s location or choose a city yourself.").muted(); HStack { TextField("e.g. Berlin, Germany", text: $city).textFieldStyle(.plain).padding(12).background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10)); Button("Use city") { weather.useCity(named: city) }.buttonStyle(AuraButtonStyle()); Button("Use my location") { weather.requestCurrentLocation() }.buttonStyle(AuraSecondaryButtonStyle()) } }.padding(24).glassPanel()
+        VStack(alignment: .leading, spacing: 15) { Text("UNITS").micro(); Picker("Temperature", selection: $unitRaw) { ForEach(TemperatureUnit.allCases) { Text($0.label).tag($0.rawValue) } }.pickerStyle(.segmented) }.padding(24).glassPanel()
+        VStack(alignment: .leading, spacing: 13) { Text("GEMINI OUTFIT ADVICE").micro(); Text("Optional. Asking Gemini sends city-level weather values only — never your exact coordinates. The key is saved in macOS Keychain, never in the project.").muted(); HStack { SecureField(weather.hasGeminiKey ? "Key saved — enter a new one to replace it" : "Paste Gemini API key", text: $key).textFieldStyle(.plain).padding(12).background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10)); Button("Save key") { weather.saveGeminiKey(key); key = "" }.buttonStyle(AuraButtonStyle()).disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) }; Text(weather.geminiStatus).font(.system(size: 12)).foregroundStyle(.white.opacity(0.44)) }.padding(24).glassPanel()
+        HStack { Spacer(); Button("Back to Now") { openNow() }.buttonStyle(AuraSecondaryButtonStyle()) }
+    }.padding(42) } }
 }
 
-private struct LiquidWeatherWidget: View {
-    let snapshot: WeatherSnapshot
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 48, style: .continuous)
-                .fill(.ultraThinMaterial).opacity(0.55)
-                .overlay(RoundedRectangle(cornerRadius: 48).stroke(.white.opacity(0.22), lineWidth: 1))
-            Circle().fill(Color(red: 0.59, green: 0.79, blue: 0.95).opacity(0.15)).blur(radius: 25).frame(width: 150)
-            LiquidMark().frame(width: 112, height: 112)
-            VStack {
-                HStack { Text("AURA").font(.system(size: 9, weight: .bold, design: .monospaced)).tracking(2); Spacer(); Text("LIVE").font(.system(size: 9, weight: .bold, design: .monospaced)) }
-                    .foregroundStyle(.white.opacity(0.48)).padding(20)
-                Spacer()
-                Text("\(Int(snapshot.temperature.rounded()))°").font(.system(size: 27, weight: .medium, design: .rounded)).padding(.bottom, 20)
-            }
-        }
-        .shadow(color: Color(red: 0.54, green: 0.75, blue: 0.93).opacity(0.19), radius: 34)
-    }
+private struct Header: View {
+    @EnvironmentObject private var weather: WeatherStore
+    var title: String? = nil; var subtitle: String? = nil
+    var body: some View { HStack(alignment: .top) { VStack(alignment: .leading, spacing: 7) { Text(subtitle ?? "WEATHER, MADE QUIET").micro(); Text(title ?? weather.snapshot.city).font(.system(size: 34, weight: .medium, design: .rounded)); if title == nil { HStack(spacing: 7) { Circle().fill(Color.ice).frame(width: 7, height: 7); Text(weather.status).muted() } } }; Spacer(); Button(action: weather.refreshCurrentWeather) { Image(systemName: weather.isLoading ? "arrow.triangle.2.circlepath" : "location.fill").font(.system(size: 14, weight: .semibold)).frame(width: 40, height: 40).background(.white.opacity(0.10), in: Circle()) }.buttonStyle(.plain).foregroundStyle(.white) } }
 }
 
-private struct LiquidMark: View {
-    var body: some View {
-        ZStack {
-            Circle().fill(.black.opacity(0.48))
-            Circle().stroke(AngularGradient(colors: [.white.opacity(0.85), .white.opacity(0.10), Color(red: 0.56, green: 0.78, blue: 0.96), .white.opacity(0.85)], center: .center), style: StrokeStyle(lineWidth: 6, lineCap: .round, dash: [0.72, 0.22]))
-                .padding(8).rotationEffect(.degrees(-38)).shadow(color: .white.opacity(0.42), radius: 7)
-            Image(systemName: "cloud.fill").font(.system(size: 19, weight: .medium)).foregroundStyle(Color(red: 0.68, green: 0.84, blue: 0.96))
-        }
-    }
-}
-
-private extension View {
-    func glassPanel() -> some View {
-        self.background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).stroke(.white.opacity(0.10), lineWidth: 1))
-    }
-}
+private struct NavItem: View { let icon: String; let label: String; let active: Bool; var body: some View { Label(label, systemImage: icon).font(.system(size: 14, weight: active ? .semibold : .medium)).foregroundStyle(active ? .white : .white.opacity(0.52)).padding(.horizontal, 13).padding(.vertical, 10).frame(maxWidth: .infinity, alignment: .leading).background(active ? .white.opacity(0.10) : .clear, in: RoundedRectangle(cornerRadius: 11)) } }
+private struct ForecastCell: View { let day: ForecastDay; let unit: TemperatureUnit; var body: some View { VStack(spacing: 13) { Text(day.date.formatted(.dateTime.weekday(.narrow))).font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundStyle(.white.opacity(0.54)); Image(systemName: WeatherSnapshot(city: "", temperature: 0, feelsLike: 0, precipitation: 0, windSpeed: 0, code: day.code, high: 0, low: 0, rainChance: 0).symbol).font(.system(size: 19)).foregroundStyle(Color.ice); Text(WeatherSnapshot.preview.temperatureText(day.high, unit: unit)).font(.system(size: 16, weight: .semibold, design: .rounded)); Text(WeatherSnapshot.preview.temperatureText(day.low, unit: unit)).font(.system(size: 12)).foregroundStyle(.white.opacity(0.42)); if day.rainChance > 0 { Text("\(day.rainChance)%").font(.system(size: 10, design: .monospaced)).foregroundStyle(.white.opacity(0.36)) } }.frame(maxWidth: .infinity).padding(.vertical, 17).background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 16)) } }
+private struct MetricCard: View { let label: String; let value: String; let icon: String; var body: some View { HStack { Image(systemName: icon).foregroundStyle(Color.ice); VStack(alignment: .leading, spacing: 4) { Text(label).micro(); Text(value).font(.system(size: 19, weight: .medium, design: .rounded)) }; Spacer() }.padding(17).frame(maxWidth: .infinity).background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 15)) } }
+private struct Tag: View { let text: String; var body: some View { Text(text).font(.system(size: 13, weight: .medium)).padding(.horizontal, 12).padding(.vertical, 7).background(.white.opacity(0.09), in: Capsule()) } }
+private struct LiquidWeatherWidget: View { let snapshot: WeatherSnapshot; let unit: TemperatureUnit; var body: some View { ZStack { RoundedRectangle(cornerRadius: 48, style: .continuous).fill(.ultraThinMaterial).opacity(0.55).overlay(RoundedRectangle(cornerRadius: 48).stroke(.white.opacity(0.22), lineWidth: 1)); Circle().fill(Color.ice.opacity(0.15)).blur(radius: 25).frame(width: 150); LiquidMark().frame(width: 112, height: 112); VStack { HStack { Text("AURA").micro(); Spacer(); Text("LIVE").micro() }.foregroundStyle(.white.opacity(0.48)).padding(20); Spacer(); Text(snapshot.temperatureText(snapshot.temperature, unit: unit)).font(.system(size: 27, weight: .medium, design: .rounded)).padding(.bottom, 20) } }.shadow(color: Color.ice.opacity(0.19), radius: 34) } }
+private struct LiquidMark: View { var body: some View { ZStack { Circle().fill(.black.opacity(0.48)); Circle().stroke(AngularGradient(colors: [.white.opacity(0.85), .white.opacity(0.10), Color.ice, .white.opacity(0.85)], center: .center), style: StrokeStyle(lineWidth: 6, lineCap: .round, dash: [0.72, 0.22])).padding(8).rotationEffect(.degrees(-38)).shadow(color: .white.opacity(0.42), radius: 7); Image(systemName: "cloud.fill").font(.system(size: 19, weight: .medium)).foregroundStyle(Color.ice) } } }
+private struct AuraButtonStyle: ButtonStyle { func makeBody(configuration: Configuration) -> some View { configuration.label.font(.system(size: 13, weight: .semibold)).padding(.horizontal, 14).padding(.vertical, 10).foregroundStyle(.black).background(Color.ice.opacity(configuration.isPressed ? 0.75 : 1), in: Capsule()) } }
+private struct AuraSecondaryButtonStyle: ButtonStyle { func makeBody(configuration: Configuration) -> some View { configuration.label.font(.system(size: 13, weight: .semibold)).padding(.horizontal, 14).padding(.vertical, 10).foregroundStyle(.white).background(.white.opacity(configuration.isPressed ? 0.15 : 0.09), in: Capsule()) } }
+private extension Color { static let ice = Color(red: 0.69, green: 0.84, blue: 0.96) }
+private extension View { func glassPanel() -> some View { background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 28, style: .continuous)).overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).stroke(.white.opacity(0.10), lineWidth: 1)) }; func micro() -> some View { font(.system(size: 11, weight: .bold, design: .monospaced)).tracking(1.8).foregroundStyle(.white.opacity(0.45)) }; func muted() -> some View { font(.system(size: 13)).foregroundStyle(.white.opacity(0.52)) } }
