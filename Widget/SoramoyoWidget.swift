@@ -52,24 +52,37 @@ private struct SoramoyoWeather: Equatable {
 
     var outfitCue: String {
         let language = preferredLanguage
-        let cue: String
-        if (51...67).contains(weatherCode) || (80...82).contains(weatherCode) || (95...99).contains(weatherCode) {
-            cue = "rain"
-        } else if apparentTemperature <= 8 {
-            cue = "cold"
-        } else if apparentTemperature <= 16 {
-            cue = "layer"
-        } else if apparentTemperature >= 27 {
-            cue = "hot"
-        } else {
-            cue = "light"
-        }
+        let cue = outfitKey
         let strings: [String: [String: String]] = [
             "en": ["rain": "Take an umbrella", "cold": "Warm jacket", "layer": "Light jacket", "hot": "Keep it light", "light": "Light layers"],
             "de": ["rain": "Schirm mitnehmen", "cold": "Warme Jacke", "layer": "Leichte Jacke", "hot": "Leicht anziehen", "light": "Leichte Schichten"],
             "ru": ["rain": "Возьми зонт", "cold": "Тёплая куртка", "layer": "Лёгкая куртка", "hot": "Одевайся легко", "light": "Лёгкие слои"]
         ]
         return strings[language]?[cue] ?? strings["en"]![cue]!
+    }
+
+    var outfitSymbol: String {
+        switch outfitKey {
+        case "rain": return "umbrella.fill"
+        case "cold": return "coat.fill"
+        case "layer": return "jacket.fill"
+        case "hot": return "sun.max.fill"
+        default: return "tshirt.fill"
+        }
+    }
+
+    private var outfitKey: String {
+        if (51...67).contains(weatherCode) || (80...82).contains(weatherCode) || (95...99).contains(weatherCode) {
+            return "rain"
+        } else if apparentTemperature <= 8 {
+            return "cold"
+        } else if apparentTemperature <= 16 {
+            return "layer"
+        } else if apparentTemperature >= 27 {
+            return "hot"
+        } else {
+            return "light"
+        }
     }
 
     var outfitLabel: String {
@@ -203,7 +216,7 @@ private struct SoramoyoWidgetView: View {
             Spacer(minLength: 2)
             Divider().opacity(0.5)
             HStack(spacing: 7) {
-                GlowSymbol(name: "tshirt.fill", size: 11)
+                GlowSymbol(name: entry.weather.outfitSymbol, size: 11)
                 Text(entry.weather.outfitCue)
                     .font(.system(size: 11, weight: .bold))
                     .lineLimit(2)
@@ -241,7 +254,7 @@ private struct SoramoyoWidgetView: View {
                     .font(.system(size: 9, weight: .bold, design: .monospaced))
                     .tracking(1.3)
                     .foregroundStyle(.secondary)
-                GlowSymbol(name: "tshirt.fill", size: 22)
+                GlowSymbol(name: entry.weather.outfitSymbol, size: 22)
                 Spacer(minLength: 0)
                 Text(entry.weather.outfitCue)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
