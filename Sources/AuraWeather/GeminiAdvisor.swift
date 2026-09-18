@@ -18,7 +18,9 @@ struct GeminiAdvisor {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw GeminiError.requestFailed }
         guard 200..<300 ~= http.statusCode else { throw GeminiError.httpStatus(http.statusCode) }
-        let decoded = try JSONDecoder().decode(GeminiResponse.self, from: data)
+        guard let decoded = try? JSONDecoder().decode(GeminiResponse.self, from: data) else {
+            return fallbackOutfit(for: weather, language: language)
+        }
         let text = decoded.candidates?.first?.content.parts.compactMap(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard text.split(whereSeparator: \.isWhitespace).count >= 5 else { return fallbackOutfit(for: weather, language: language) }
         return text

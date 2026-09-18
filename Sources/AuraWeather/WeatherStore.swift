@@ -110,6 +110,7 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
             geminiStatus = "Add a Gemini API key in Settings first"
             return
         }
+        geminiNote = nil
         geminiStatus = "Thinking about your outfit…"
         Task {
             do {
