@@ -5,6 +5,8 @@ project_root="$(cd "$(dirname "$0")/.." && pwd)"
 app_root="$project_root/outputs/Soramoyo.app"
 widget_root="$app_root/Contents/PlugIns/SoramoyoWidgets.appex"
 iconset_root="$project_root/Assets/Aura.iconset"
+development_identity="$(security find-identity -v -p codesigning | sed -n 's/.*"\(Apple Development:[^"]*\)".*/\1/p' | head -n 1)"
+signing_identity="${development_identity:--}"
 
 swift "$project_root/Scripts/render-icon.swift" "$project_root/Assets/Aura-AppIcon.png"
 mkdir -p "$iconset_root"
@@ -63,6 +65,8 @@ cat > "$app_root/Contents/Info.plist" <<'PLIST'
   <key>NSLocationWhenInUseUsageDescription</key><string>Soramoyo uses your location to show local weather.</string>
 </dict></plist>
 PLIST
-codesign --force --sign - --entitlements "$project_root/Widget/SoramoyoWidgets.entitlements" "$widget_root"
-codesign --force --sign - "$app_root"
+codesign --force --options runtime --sign "$signing_identity" \
+  --entitlements "$project_root/Widget/SoramoyoWidgets.entitlements" "$widget_root"
+codesign --force --options runtime --sign "$signing_identity" "$app_root"
 echo "Created: $app_root"
+echo "Signed with: $signing_identity"
