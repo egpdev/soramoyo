@@ -5,7 +5,9 @@ struct GeminiAdvisor {
         let prompt = """
         You are a concise personal weather stylist. Based only on this city-level weather summary, give one practical outfit recommendation in English. Keep it under 45 words. No greetings, no emojis, no medical advice. City: \(weather.city). Condition: \(weather.condition). Temperature: \(Int(weather.temperature.rounded()))C, feels like \(Int(weather.feelsLike.rounded()))C, wind \(Int(weather.windSpeed.rounded())) km/h, rain chance \(weather.rainChance)%.
         """
-        let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent")!
+        // Gemini 2.5 Flash is no longer available to newly created API keys.
+        // 3.6 Flash is the current fast text model exposed for this key.
+        let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.timeoutInterval = 18
@@ -37,12 +39,13 @@ private struct GeminiResponse: Decodable {
     struct Part: Decodable { let text: String? }
 }
 
-enum GeminiError: LocalizedError { case requestFailed, emptyResponse, httpStatus(Int)
+enum GeminiError: LocalizedError { case requestFailed, emptyResponse, httpStatus(Int), timedOut
     var errorDescription: String? {
         switch self {
         case .requestFailed: return "Gemini couldn’t answer. Check the connection."
         case .emptyResponse: return "Gemini returned no outfit note."
-        case .httpStatus(let code): return "Gemini returned HTTP \(code). Check the key’s API access."
+        case .httpStatus(let code): return "Gemini returned HTTP \(code). The key is saved, but this request was rejected."
+        case .timedOut: return "Gemini took too long. Please try once more."
         }
     }
 }

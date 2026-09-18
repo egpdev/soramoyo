@@ -99,7 +99,11 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
                 geminiNote = try await GeminiAdvisor().outfitNote(for: snapshot, apiKey: key)
                 geminiStatus = "AI outfit note · city-level weather only"
             } catch {
-                geminiStatus = error.localizedDescription
+                if let urlError = error as? URLError, urlError.code == .timedOut {
+                    geminiStatus = GeminiError.timedOut.localizedDescription
+                } else {
+                    geminiStatus = error.localizedDescription
+                }
             }
         }
     }
