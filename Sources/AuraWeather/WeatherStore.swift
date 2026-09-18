@@ -10,13 +10,16 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
     @Published private(set) var status = "Using Berlin as a preview"
     @Published private(set) var geminiNote: String?
     @Published private(set) var geminiStatus = "Local outfit advice is active"
-    @Published private(set) var hasGeminiKey = KeychainStore.geminiKey() != nil
+    @Published private(set) var hasGeminiKey = false
 
     private let locationManager = CLLocationManager()
     private let geocoder = CLGeocoder()
+    private var cachedGeminiKey: String?
 
     override init() {
         super.init()
+        cachedGeminiKey = KeychainStore.geminiKey()
+        hasGeminiKey = cachedGeminiKey != nil
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyKilometer
         Task { await refresh(latitude: 52.52, longitude: 13.405, city: "Berlin") }
@@ -75,7 +78,9 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
 
     func saveGeminiKey(_ key: String) {
         do {
-            try KeychainStore.saveGeminiKey(key.trimmingCharacters(in: .whitespacesAndNewlines))
+            let cleanedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+            try KeychainStore.saveGeminiKey(cleanedKey)
+            cachedGeminiKey = cleanedKey
             hasGeminiKey = true
             geminiStatus = "Gemini is ready — your key is in macOS Keychain"
         } catch {
@@ -84,7 +89,7 @@ final class WeatherStore: NSObject, ObservableObject, CLLocationManagerDelegate 
     }
 
     func generateGeminiAdvice() {
-        guard let key = KeychainStore.geminiKey(), !key.isEmpty else {
+        guard let key = cachedGeminiKey ?? KeychainStore.geminiKey(), !key.isEmpty else {
             geminiStatus = "Add a Gemini API key in Settings first"
             return
         }
