@@ -12,7 +12,7 @@
 - **City and district search** — Core Location and geocoding support both the current Mac location and manually selected places.
 - **Five-day forecast** — compact daily cards plus current outside conditions and precipitation context.
 - **Hourly Day Pulse** — the liquid weather widget opens an animated summary of how conditions develop during the day.
-- **macOS desktop widgets** — native small and medium WidgetKit layouts mirror the app's black-glass weather ring and refresh live Berlin conditions in the background.
+- **macOS desktop widgets** — native small and medium WidgetKit layouts combine live weather with practical outfit guidance and weather-aware color accents.
 - **Outfit guidance** — an offline rules engine always works; optional Gemini advice adds a short natural-language recommendation.
 - **Three languages** — complete English, German and Russian interfaces, including weather conditions and outfit suggestions.
 - **Privacy-conscious** — exact coordinates stay on the Mac. A Gemini key is stored in macOS Keychain and is never committed to the project.
@@ -26,6 +26,24 @@
 </p>
 
 The Dock icon turns SORAMOYO's central weather ring into a compact product mark. The cloud inside the luminous ring connects the icon directly to the live widget in the app.
+
+### Native macOS widgets
+
+#### Medium widget
+
+<p align="center">
+  <img src="Assets/Screenshots/widget-medium.png" width="682" alt="SORAMOYO medium macOS widget showing Berlin weather and a light-jacket recommendation">
+</p>
+
+The medium layout separates live weather and outfit guidance into two clear columns. It shows the selected city, current temperature and condition, daily high and low, plus a localized recommendation with a matching clothing icon. Full-color symbols and blue ambient glow remain visible against the black-glass background.
+
+#### Small widget
+
+<p align="center">
+  <img src="Assets/Screenshots/widget-small.png" width="310" alt="SORAMOYO small macOS widget with compact weather and outfit guidance">
+</p>
+
+The small layout keeps the same useful information in a compact vertical composition: city and weather icon at the top, temperature and daily range in the center, and the outfit recommendation below a subtle divider. Both layouts refresh through WidgetKit and follow SORAMOYO's English, German or Russian localization.
 
 ### Live weather overview
 
