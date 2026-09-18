@@ -134,6 +134,27 @@ private extension Color {
     static let soramoyoBlue = Color(red: 0.64, green: 0.83, blue: 0.98)
 }
 
+private struct GlowSymbol: View {
+    let name: String
+    let size: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.soramoyoBlue.opacity(0.24))
+                .frame(width: size * 1.9, height: size * 1.9)
+                .blur(radius: size * 0.55)
+            Image(systemName: name)
+                .symbolRenderingMode(.hierarchical)
+                .font(.system(size: size, weight: .semibold))
+                .foregroundStyle(Color.soramoyoBlue)
+                .shadow(color: Color.soramoyoBlue.opacity(0.95), radius: size * 0.32)
+                .widgetAccentable()
+        }
+        .frame(width: size * 2, height: size * 2)
+    }
+}
+
 private struct SoramoyoWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: SoramoyoEntry
@@ -142,7 +163,8 @@ private struct SoramoyoWidgetView: View {
             .containerBackground(for: .widget) {
                 ZStack {
                     Color.black
-                    RadialGradient(colors: [Color.soramoyoBlue.opacity(0.10), .clear], center: .topTrailing, startRadius: 0, endRadius: 230)
+                    RadialGradient(colors: [Color.soramoyoBlue.opacity(0.24), .clear], center: .topLeading, startRadius: 0, endRadius: 190)
+                    RadialGradient(colors: [Color.soramoyoBlue.opacity(0.14), .clear], center: .bottomTrailing, startRadius: 0, endRadius: 220)
                 }
             }
     }
@@ -153,15 +175,12 @@ private struct SoramoyoWidgetView: View {
                 Text(entry.weather.city)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                 Spacer()
-                Image(systemName: entry.weather.symbol)
-                    .symbolRenderingMode(.hierarchical)
-                    .font(.system(size: 19, weight: .semibold))
-                    .foregroundStyle(Color.soramoyoBlue)
-                    .widgetAccentable()
+                GlowSymbol(name: entry.weather.symbol, size: 17)
             }
             Text("\(Int(entry.weather.temperature.rounded()))°")
                 .font(.system(size: 39, weight: .medium, design: .rounded))
                 .monospacedDigit()
+                .shadow(color: Color.soramoyoBlue.opacity(0.25), radius: 8)
             HStack(spacing: 7) {
                 Text(entry.weather.condition)
                     .lineLimit(1)
@@ -172,10 +191,7 @@ private struct SoramoyoWidgetView: View {
             Spacer(minLength: 2)
             Divider().opacity(0.5)
             HStack(spacing: 7) {
-                Image(systemName: "tshirt.fill")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Color.soramoyoBlue)
-                    .widgetAccentable()
+                GlowSymbol(name: "tshirt.fill", size: 11)
                 Text(entry.weather.outfitCue)
                     .font(.system(size: 11, weight: .bold))
                     .lineLimit(2)
@@ -188,11 +204,7 @@ private struct SoramoyoWidgetView: View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 7) {
-                    Image(systemName: entry.weather.symbol)
-                        .symbolRenderingMode(.hierarchical)
-                        .font(.system(size: 19, weight: .semibold))
-                        .foregroundStyle(Color.soramoyoBlue)
-                        .widgetAccentable()
+                    GlowSymbol(name: entry.weather.symbol, size: 17)
                     Text(entry.weather.city)
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                 }
@@ -200,6 +212,7 @@ private struct SoramoyoWidgetView: View {
                 Text("\(Int(entry.weather.temperature.rounded()))°")
                     .font(.system(size: 44, weight: .medium, design: .rounded))
                     .monospacedDigit()
+                    .shadow(color: Color.soramoyoBlue.opacity(0.25), radius: 9)
                 Text(entry.weather.condition)
                     .font(.system(size: 12, weight: .semibold))
                     .lineLimit(1)
@@ -216,10 +229,7 @@ private struct SoramoyoWidgetView: View {
                     .font(.system(size: 9, weight: .bold, design: .monospaced))
                     .tracking(1.3)
                     .foregroundStyle(.secondary)
-                Image(systemName: "tshirt.fill")
-                    .font(.system(size: 25, weight: .semibold))
-                    .foregroundStyle(Color.soramoyoBlue)
-                    .widgetAccentable()
+                GlowSymbol(name: "tshirt.fill", size: 22)
                 Spacer(minLength: 0)
                 Text(entry.weather.outfitCue)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
@@ -239,5 +249,6 @@ struct SoramoyoWeatherWidget: Widget {
             .configurationDisplayName("SORAMOYO Weather")
             .description("Quiet live weather and a simple outfit cue.")
             .supportedFamilies([.systemSmall, .systemMedium])
+            .containerBackgroundRemovable(false)
     }
 }

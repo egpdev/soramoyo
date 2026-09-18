@@ -40,8 +40,8 @@ cat > "$app_root/Contents/Info.plist" <<'PLIST'
   <key>CFBundleIdentifier</key><string>local.soramoyo.weather</string>
   <key>CFBundleName</key><string>Soramoyo</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.2</string>
-  <key>CFBundleVersion</key><string>3</string>
+  <key>CFBundleShortVersionString</key><string>1.3</string>
+  <key>CFBundleVersion</key><string>4</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>NSLocationWhenInUseUsageDescription</key><string>Soramoyo uses your location to show local weather.</string>
 </dict></plist>
