@@ -65,9 +65,9 @@ private struct SoramoyoWeather: Equatable {
             cue = "light"
         }
         let strings: [String: [String: String]] = [
-            "en": ["rain": "Take an umbrella", "cold": "Warm jacket", "layer": "Add one layer", "hot": "Keep it light", "light": "Light layers"],
-            "de": ["rain": "Schirm mitnehmen", "cold": "Warme Jacke", "layer": "Eine Schicht mehr", "hot": "Leicht anziehen", "light": "Leichte Schichten"],
-            "ru": ["rain": "Возьми зонт", "cold": "Тёплая куртка", "layer": "Добавь один слой", "hot": "Одевайся легко", "light": "Лёгкие слои"]
+            "en": ["rain": "Take an umbrella", "cold": "Warm jacket", "layer": "Light jacket", "hot": "Keep it light", "light": "Light layers"],
+            "de": ["rain": "Schirm mitnehmen", "cold": "Warme Jacke", "layer": "Leichte Jacke", "hot": "Leicht anziehen", "light": "Leichte Schichten"],
+            "ru": ["rain": "Возьми зонт", "cold": "Тёплая куртка", "layer": "Лёгкая куртка", "hot": "Одевайся легко", "light": "Лёгкие слои"]
         ]
         return strings[language]?[cue] ?? strings["en"]![cue]!
     }
@@ -140,18 +140,30 @@ private struct GlowSymbol: View {
 
     var body: some View {
         ZStack {
-            Circle()
-                .fill(Color.soramoyoBlue.opacity(0.24))
-                .frame(width: size * 1.9, height: size * 1.9)
-                .blur(radius: size * 0.55)
+            fullColorSymbol
+                .opacity(0.72)
+                .blur(radius: size * 0.48)
+                .scaleEffect(1.22)
+            fullColorSymbol
+                .shadow(color: Color.soramoyoBlue.opacity(0.95), radius: size * 0.32)
+        }
+        .frame(width: size * 2, height: size * 2)
+    }
+
+    @ViewBuilder
+    private var fullColorSymbol: some View {
+        if #available(macOS 15.0, *) {
+            Image(systemName: name)
+                .widgetAccentedRenderingMode(.fullColor)
+                .symbolRenderingMode(.hierarchical)
+                .font(.system(size: size, weight: .semibold))
+                .foregroundStyle(Color.soramoyoBlue)
+        } else {
             Image(systemName: name)
                 .symbolRenderingMode(.hierarchical)
                 .font(.system(size: size, weight: .semibold))
                 .foregroundStyle(Color.soramoyoBlue)
-                .shadow(color: Color.soramoyoBlue.opacity(0.95), radius: size * 0.32)
-                .widgetAccentable()
         }
-        .frame(width: size * 2, height: size * 2)
     }
 }
 
