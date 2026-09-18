@@ -6,10 +6,6 @@
 
 **AURA** is a native macOS weather app that combines live local conditions with practical outfit guidance. It can use the Mac's location or search by city and district, presents a five-day forecast, and optionally asks Gemini for a concise clothing recommendation.
 
-<p align="center">
-  <img src="Assets/Screenshots/now.png" width="760" alt="AURA current weather screen">
-</p>
-
 ## Highlights
 
 - **Live local weather** — current temperature, feels-like value, precipitation, wind and daily high/low data from Open-Meteo.
@@ -20,18 +16,63 @@
 - **Three languages** — complete English, German and Russian interfaces, including weather conditions and outfit suggestions.
 - **Privacy-conscious** — exact coordinates stay on the Mac. A Gemini key is stored in macOS Keychain and is never committed to the project.
 
-<p align="center">
-  <img src="Assets/Screenshots/forecast.png" width="49%" alt="AURA five-day forecast">
-  <img src="Assets/Screenshots/settings.png" width="49%" alt="AURA settings">
-</p>
+## Product tour
 
-## Gemini outfit advice
-
-Gemini receives only city- or district-level weather values, not exact coordinates. The response is validated before display; incomplete output falls back to AURA's local outfit engine.
+### App identity
 
 <p align="center">
-  <img src="Assets/Screenshots/ai-outfit.png" width="760" alt="AURA Gemini outfit recommendation">
+  <img src="Assets/Screenshots/app-icon-dock.png" width="150" alt="AURA icon in the macOS Dock">
 </p>
+
+The Dock icon turns AURA's central weather ring into a compact product mark. The cloud inside the luminous ring connects the icon directly to the live widget in the app.
+
+### Live weather overview
+
+<p align="center">
+  <img src="Assets/Screenshots/current-weather.png" width="760" alt="AURA live weather overview for Berlin">
+</p>
+
+The main view prioritizes the information needed before leaving: current temperature, condition, daily high and low, and a live visual widget. The location button refreshes weather using Core Location.
+
+### Hourly Day Pulse
+
+<p align="center">
+  <img src="Assets/Screenshots/day-pulse.png" width="760" alt="AURA hourly Day Pulse panel">
+</p>
+
+Clicking the liquid weather widget opens an animated bubble panel with the next hourly conditions, temperatures and a short rain summary. It keeps detailed data one interaction away without crowding the main screen.
+
+### Gemini outfit recommendation
+
+<p align="center">
+  <img src="Assets/Screenshots/gemini-advice.png" width="760" alt="AURA Gemini outfit recommendation">
+</p>
+
+Gemini receives city- or district-level weather values, never exact coordinates, and returns one concise clothing recommendation. The response is validated before display; incomplete output falls back to AURA's local outfit engine.
+
+### Five-day forecast
+
+<p align="center">
+  <img src="Assets/Screenshots/five-day-forecast.png" width="760" alt="AURA five-day weather forecast">
+</p>
+
+The forecast combines daily high and low temperatures with condition icons and rain probability. A separate conditions panel explains the current feels-like temperature, precipitation and wind.
+
+### German settings
+
+<p align="center">
+  <img src="Assets/Screenshots/settings-german.png" width="760" alt="AURA settings localized in German">
+</p>
+
+Settings support automatic location, manual city or district search, Celsius and Fahrenheit, and instant language switching. This screen demonstrates the complete German localization rather than a partially translated interface.
+
+### Localized navigation
+
+<p align="center">
+  <img src="Assets/Screenshots/sidebar-german.png" width="260" alt="AURA sidebar localized in German">
+</p>
+
+Navigation, privacy copy, weather labels and outfit guidance all follow the selected language. English, German and Russian are implemented across the complete app flow.
 
 ## Tech stack
 
