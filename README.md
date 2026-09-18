@@ -7,6 +7,8 @@ A minimal native macOS weather desk for the moment you are about to leave. Aura 
 - Location permission through macOS Core Location
 - Current temperature, feels-like temperature, wind, rain chance and five-day forecast from Open-Meteo
 - A local outfit engine that reacts to weather conditions — no API key and no account needed
+- Working navigation: Now, Forecast, and Settings with manual city lookup and Celsius/Fahrenheit switching
+- Optional Gemini outfit note: the user adds their own API key in Settings; it is stored only in macOS Keychain
 - A glass-like weather widget designed as the visual centre of the app
 - A generated macOS app icon: a luminous weather ring, used in the Dock and Finder
 
