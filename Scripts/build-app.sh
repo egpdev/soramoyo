@@ -10,6 +10,7 @@ development_identity="$(security find-identity -v -p codesigning | sed -n 's/.*"
 signing_identity="${development_identity:--}"
 
 swift "$project_root/Scripts/render-icon.swift" "$project_root/Assets/Aura-AppIcon.png"
+swift "$project_root/Scripts/render-widget-backgrounds.swift" "$project_root/Widget"
 mkdir -p "$iconset_root"
 for size in 16 32 128 256 512; do
   sips -z "$size" "$size" "$project_root/Assets/Aura-AppIcon.png" --out "$iconset_root/icon_${size}x${size}.png" >/dev/null
@@ -40,8 +41,8 @@ cat > "$app_root/Contents/Info.plist" <<'PLIST'
   <key>CFBundleIdentifier</key><string>local.soramoyo.weather</string>
   <key>CFBundleName</key><string>Soramoyo</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.5</string>
-  <key>CFBundleVersion</key><string>6</string>
+  <key>CFBundleShortVersionString</key><string>1.6</string>
+  <key>CFBundleVersion</key><string>7</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>NSLocationWhenInUseUsageDescription</key><string>Soramoyo uses your location to show local weather.</string>
 </dict></plist>

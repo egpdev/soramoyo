@@ -18,6 +18,10 @@ widget_group.new_file("SoramoyoWidgets.entitlements")
 
 target = project.new_target(:app_extension, "SoramoyoWidgets", :osx, "14.0")
 target.source_build_phase.add_file_reference(source)
+["WidgetGlowCloud.png", "WidgetGlowRain.png", "WidgetGlowSun.png", "WidgetGlowIce.png"].each do |asset_name|
+  asset = widget_group.new_file(asset_name)
+  target.resources_build_phase.add_file_reference(asset)
+end
 
 target.build_configurations.each do |configuration|
   settings = configuration.build_settings

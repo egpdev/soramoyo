@@ -88,6 +88,15 @@ private struct SoramoyoWeather: Equatable {
     var outfitLabel: String {
         ["en": "WHAT TO WEAR", "de": "WAS ANZIEHEN", "ru": "ЧТО НАДЕТЬ"][preferredLanguage] ?? "WHAT TO WEAR"
     }
+
+    var backgroundAsset: String {
+        switch weatherCode {
+        case 0, 1: return "WidgetGlowSun"
+        case 51...67, 80...82, 95...99: return "WidgetGlowRain"
+        case 71...77, 85, 86: return "WidgetGlowIce"
+        default: return "WidgetGlowCloud"
+        }
+    }
 }
 
 private struct OpenMeteoResponse: Decodable {
@@ -188,8 +197,17 @@ private struct SoramoyoWidgetView: View {
             .containerBackground(for: .widget) {
                 ZStack {
                     Color.black
-                    RadialGradient(colors: [Color.soramoyoBlue.opacity(0.24), .clear], center: .topLeading, startRadius: 0, endRadius: 190)
-                    RadialGradient(colors: [Color.soramoyoBlue.opacity(0.14), .clear], center: .bottomTrailing, startRadius: 0, endRadius: 220)
+                    if #available(macOS 15.0, *) {
+                        Image(entry.weather.backgroundAsset)
+                            .resizable()
+                            .widgetAccentedRenderingMode(.fullColor)
+                            .scaledToFill()
+                    } else {
+                        Image(entry.weather.backgroundAsset)
+                            .resizable()
+                            .scaledToFill()
+                    }
+                    LinearGradient(colors: [Color.black.opacity(0.03), Color.black.opacity(0.30)], startPoint: .top, endPoint: .bottom)
                 }
             }
     }
