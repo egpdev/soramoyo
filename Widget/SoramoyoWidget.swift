@@ -2,6 +2,10 @@ import Foundation
 import SwiftUI
 import WidgetKit
 
+private var preferredLanguage: String {
+    Locale.preferredLanguages.first.map { String($0.prefix(2)) } ?? "en"
+}
+
 private struct SoramoyoWeather: Equatable {
     let city: String
     let temperature: Double
@@ -26,7 +30,7 @@ private struct SoramoyoWeather: Equatable {
     }
 
     var condition: String {
-        let language = Locale.current.language.languageCode?.identifier ?? "en"
+        let language = preferredLanguage
         let key: String
         switch weatherCode {
         case 0: key = "clear"
@@ -47,7 +51,7 @@ private struct SoramoyoWeather: Equatable {
     }
 
     var outfitCue: String {
-        let language = Locale.current.language.languageCode?.identifier ?? "en"
+        let language = preferredLanguage
         let cue: String
         if (51...67).contains(weatherCode) || (80...82).contains(weatherCode) || (95...99).contains(weatherCode) {
             cue = "rain"
@@ -66,6 +70,10 @@ private struct SoramoyoWeather: Equatable {
             "ru": ["rain": "Возьми зонт", "cold": "Тёплая куртка", "layer": "Добавь один слой", "hot": "Одевайся легко", "light": "Лёгкие слои"]
         ]
         return strings[language]?[cue] ?? strings["en"]![cue]!
+    }
+
+    var outfitLabel: String {
+        ["en": "WHAT TO WEAR", "de": "WAS ANZIEHEN", "ru": "ЧТО НАДЕТЬ"][preferredLanguage] ?? "WHAT TO WEAR"
     }
 }
 
@@ -126,26 +134,6 @@ private extension Color {
     static let soramoyoBlue = Color(red: 0.64, green: 0.83, blue: 0.98)
 }
 
-private struct WeatherOrb: View {
-    let weather: SoramoyoWeather
-    let diameter: CGFloat
-    var body: some View {
-        ZStack {
-            Circle().fill(Color(red: 0.10, green: 0.12, blue: 0.14)).shadow(color: .soramoyoBlue.opacity(0.32), radius: 16)
-            Circle().stroke(Color.white.opacity(0.10), lineWidth: 10)
-            Circle()
-                .trim(from: 0.04, to: 0.80)
-                .stroke(AngularGradient(colors: [.soramoyoBlue, .white.opacity(0.92), .soramoyoBlue.opacity(0.25)], center: .center), style: StrokeStyle(lineWidth: 7, lineCap: .round))
-                .rotationEffect(.degrees(18))
-            Image(systemName: weather.symbol)
-                .symbolRenderingMode(.hierarchical)
-                .font(.system(size: diameter * 0.25, weight: .semibold))
-                .foregroundStyle(Color.soramoyoBlue)
-        }
-        .frame(width: diameter, height: diameter)
-    }
-}
-
 private struct SoramoyoWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: SoramoyoEntry
@@ -160,46 +148,86 @@ private struct SoramoyoWidgetView: View {
     }
 
     private var smallView: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 5) {
             HStack {
-                Text("空模様").font(.system(size: 11, weight: .bold, design: .monospaced)).tracking(2).foregroundStyle(.secondary)
+                Text(entry.weather.city)
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
                 Spacer()
-                Text(entry.weather.city.uppercased()).font(.system(size: 9, weight: .bold, design: .monospaced)).foregroundStyle(.secondary)
+                Image(systemName: entry.weather.symbol)
+                    .symbolRenderingMode(.hierarchical)
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(Color.soramoyoBlue)
+                    .widgetAccentable()
             }
-            Spacer(minLength: 0)
-            HStack(spacing: 11) {
-                WeatherOrb(weather: entry.weather, diameter: 58)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("\(Int(entry.weather.temperature.rounded()))°").font(.system(size: 31, weight: .medium, design: .rounded)).monospacedDigit()
-                    Text(entry.weather.condition).font(.system(size: 11, weight: .semibold)).foregroundStyle(Color.soramoyoBlue).lineLimit(1).minimumScaleFactor(0.7)
-                }
+            Text("\(Int(entry.weather.temperature.rounded()))°")
+                .font(.system(size: 39, weight: .medium, design: .rounded))
+                .monospacedDigit()
+            HStack(spacing: 7) {
+                Text(entry.weather.condition)
+                    .lineLimit(1)
+                Text("H \(Int(entry.weather.high.rounded()))° · L \(Int(entry.weather.low.rounded()))°")
+                    .foregroundStyle(.secondary)
             }
-            Spacer(minLength: 0)
-            Text(entry.weather.outfitCue).font(.system(size: 12, weight: .semibold)).lineLimit(1)
+            .font(.system(size: 10, weight: .semibold))
+            Spacer(minLength: 2)
+            Divider().opacity(0.5)
+            HStack(spacing: 7) {
+                Image(systemName: "tshirt.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.soramoyoBlue)
+                    .widgetAccentable()
+                Text(entry.weather.outfitCue)
+                    .font(.system(size: 11, weight: .bold))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+            }
         }
-        .padding(2)
     }
 
     private var mediumView: some View {
-        HStack(spacing: 18) {
-            VStack(alignment: .leading, spacing: 5) {
-                Text("SORAMOYO").font(.system(size: 11, weight: .bold, design: .monospaced)).tracking(2.5).foregroundStyle(.secondary)
-                Text(entry.weather.city).font(.system(size: 18, weight: .semibold, design: .rounded))
-                Spacer(minLength: 0)
-                HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    Text("\(Int(entry.weather.temperature.rounded()))°").font(.system(size: 42, weight: .medium, design: .rounded)).monospacedDigit()
-                    Text("C").font(.system(size: 14, weight: .bold)).foregroundStyle(.secondary)
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 7) {
+                    Image(systemName: entry.weather.symbol)
+                        .symbolRenderingMode(.hierarchical)
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(Color.soramoyoBlue)
+                        .widgetAccentable()
+                    Text(entry.weather.city)
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
                 }
-                Text(entry.weather.condition).font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.soramoyoBlue)
-                Text("H \(Int(entry.weather.high.rounded()))°  ·  L \(Int(entry.weather.low.rounded()))°").font(.system(size: 10, weight: .medium, design: .monospaced)).foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                Text("\(Int(entry.weather.temperature.rounded()))°")
+                    .font(.system(size: 44, weight: .medium, design: .rounded))
+                    .monospacedDigit()
+                Text(entry.weather.condition)
+                    .font(.system(size: 12, weight: .semibold))
+                    .lineLimit(1)
+                Text("H \(Int(entry.weather.high.rounded()))°  ·  L \(Int(entry.weather.low.rounded()))°")
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.secondary)
             }
-            Spacer(minLength: 4)
-            VStack(spacing: 8) {
-                WeatherOrb(weather: entry.weather, diameter: 88)
-                Text(entry.weather.outfitCue).font(.system(size: 12, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.75)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text(entry.weather.outfitLabel)
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .tracking(1.3)
+                    .foregroundStyle(.secondary)
+                Image(systemName: "tshirt.fill")
+                    .font(.system(size: 25, weight: .semibold))
+                    .foregroundStyle(Color.soramoyoBlue)
+                    .widgetAccentable()
+                Spacer(minLength: 0)
+                Text(entry.weather.outfitCue)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.75)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(2)
     }
 }
 
@@ -211,6 +239,5 @@ struct SoramoyoWeatherWidget: Widget {
             .configurationDisplayName("SORAMOYO Weather")
             .description("Quiet live weather and a simple outfit cue.")
             .supportedFamilies([.systemSmall, .systemMedium])
-            .contentMarginsDisabled()
     }
 }
