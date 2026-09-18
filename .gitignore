@@ -1,0 +1,4 @@
+.build/
+outputs/
+Assets/Aura.iconset/
+.DS_Store
