@@ -1,10 +1,10 @@
-# AURA — Weather, made quiet
+# SORAMOYO / 空模様 — Weather, made quiet
 
 <p align="center">
-  <img src="Assets/Aura-AppIcon.png" width="116" alt="AURA app icon">
+  <img src="Assets/Aura-AppIcon.png" width="116" alt="SORAMOYO app icon">
 </p>
 
-**AURA** is a native macOS weather app that combines live local conditions with practical outfit guidance. It can use the Mac's location or search by city and district, presents a five-day forecast, and optionally asks Gemini for a concise clothing recommendation.
+**SORAMOYO** is a native macOS weather app that combines live local conditions with practical outfit guidance. Its name comes from the Japanese word **空模様** — the look of the sky or the state of the weather. It can use the Mac's location or search by city and district, presents a five-day forecast, and optionally asks Gemini for a concise clothing recommendation.
 
 ## Highlights
 
@@ -21,15 +21,15 @@
 ### App identity
 
 <p align="center">
-  <img src="Assets/Screenshots/app-icon-dock.png" width="150" alt="AURA icon in the macOS Dock">
+  <img src="Assets/Screenshots/app-icon-dock.png" width="150" alt="SORAMOYO icon in the macOS Dock">
 </p>
 
-The Dock icon turns AURA's central weather ring into a compact product mark. The cloud inside the luminous ring connects the icon directly to the live widget in the app.
+The Dock icon turns SORAMOYO's central weather ring into a compact product mark. The cloud inside the luminous ring connects the icon directly to the live widget in the app.
 
 ### Live weather overview
 
 <p align="center">
-  <img src="Assets/Screenshots/current-weather.png" width="760" alt="AURA live weather overview for Berlin">
+  <img src="Assets/Screenshots/current-weather.png" width="760" alt="SORAMOYO live weather overview for Berlin">
 </p>
 
 The main view prioritizes the information needed before leaving: current temperature, condition, daily high and low, and a live visual widget. The location button refreshes weather using Core Location.
@@ -37,7 +37,7 @@ The main view prioritizes the information needed before leaving: current tempera
 ### Hourly Day Pulse
 
 <p align="center">
-  <img src="Assets/Screenshots/day-pulse.png" width="760" alt="AURA hourly Day Pulse panel">
+  <img src="Assets/Screenshots/day-pulse.png" width="760" alt="SORAMOYO hourly Day Pulse panel">
 </p>
 
 Clicking the liquid weather widget opens an animated bubble panel with the next hourly conditions, temperatures and a short rain summary. It keeps detailed data one interaction away without crowding the main screen.
@@ -45,15 +45,15 @@ Clicking the liquid weather widget opens an animated bubble panel with the next 
 ### Gemini outfit recommendation
 
 <p align="center">
-  <img src="Assets/Screenshots/gemini-advice.png" width="760" alt="AURA Gemini outfit recommendation">
+  <img src="Assets/Screenshots/gemini-advice.png" width="760" alt="SORAMOYO Gemini outfit recommendation">
 </p>
 
-Gemini receives city- or district-level weather values, never exact coordinates, and returns one concise clothing recommendation. The response is validated before display; incomplete output falls back to AURA's local outfit engine.
+Gemini receives city- or district-level weather values, never exact coordinates, and returns one concise clothing recommendation. The response is validated before display; incomplete output falls back to SORAMOYO's local outfit engine.
 
 ### Five-day forecast
 
 <p align="center">
-  <img src="Assets/Screenshots/five-day-forecast.png" width="760" alt="AURA five-day weather forecast">
+  <img src="Assets/Screenshots/five-day-forecast.png" width="760" alt="SORAMOYO five-day weather forecast">
 </p>
 
 The forecast combines daily high and low temperatures with condition icons and rain probability. A separate conditions panel explains the current feels-like temperature, precipitation and wind.
@@ -61,7 +61,7 @@ The forecast combines daily high and low temperatures with condition icons and r
 ### German settings
 
 <p align="center">
-  <img src="Assets/Screenshots/settings-german.png" width="760" alt="AURA settings localized in German">
+  <img src="Assets/Screenshots/settings-german.png" width="760" alt="SORAMOYO settings localized in German">
 </p>
 
 Settings support automatic location, manual city or district search, Celsius and Fahrenheit, and instant language switching. This screen demonstrates the complete German localization rather than a partially translated interface.
@@ -69,7 +69,7 @@ Settings support automatic location, manual city or district search, Celsius and
 ### Localized navigation
 
 <p align="center">
-  <img src="Assets/Screenshots/sidebar-german.png" width="260" alt="AURA sidebar localized in German">
+  <img src="Assets/Screenshots/sidebar-german.png" width="260" alt="SORAMOYO sidebar localized in German">
 </p>
 
 Navigation, privacy copy, weather labels and outfit guidance all follow the selected language. English, German and Russian are implemented across the complete app flow.
@@ -95,10 +95,10 @@ Build the standalone app bundle:
 
 ```sh
 zsh Scripts/build-app.sh
-open outputs/Aura.app
+open outputs/Soramoyo.app
 ```
 
-Gemini is optional. Add your own API key inside AURA Settings; the local weather and outfit engine work without it.
+Gemini is optional. Add your own API key inside SORAMOYO Settings; the local weather and outfit engine work without it.
 
 ## Project structure
 
@@ -111,4 +111,4 @@ Scripts/               Standalone macOS app build helper
 
 ## Status
 
-AURA is a portfolio project built to demonstrate native macOS development, API integration, localization, secure secret storage and product-focused UI design.
+SORAMOYO is a portfolio project built to demonstrate native macOS development, API integration, localization, secure secret storage and product-focused UI design.

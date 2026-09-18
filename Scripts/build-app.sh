@@ -2,7 +2,7 @@
 set -euo pipefail
 
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
-app_root="$project_root/outputs/Aura.app"
+app_root="$project_root/outputs/Soramoyo.app"
 iconset_root="$project_root/Assets/Aura.iconset"
 
 swift "$project_root/Scripts/render-icon.swift" "$project_root/Assets/Aura-AppIcon.png"
@@ -23,14 +23,14 @@ cat > "$app_root/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>CFBundleDisplayName</key><string>Aura</string>
+  <key>CFBundleDisplayName</key><string>Soramoyo</string>
   <key>CFBundleExecutable</key><string>AuraWeather</string>
   <key>CFBundleIconFile</key><string>Aura</string>
-  <key>CFBundleIdentifier</key><string>local.aura.weather</string>
-  <key>CFBundleName</key><string>Aura</string>
+  <key>CFBundleIdentifier</key><string>local.soramoyo.weather</string>
+  <key>CFBundleName</key><string>Soramoyo</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
-  <key>NSLocationWhenInUseUsageDescription</key><string>Aura uses your location to show local weather.</string>
+  <key>NSLocationWhenInUseUsageDescription</key><string>Soramoyo uses your location to show local weather.</string>
 </dict></plist>
 PLIST
 codesign --force --deep --sign - "$app_root"
