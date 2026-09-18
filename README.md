@@ -12,6 +12,7 @@
 - **City and district search** — Core Location and geocoding support both the current Mac location and manually selected places.
 - **Five-day forecast** — compact daily cards plus current outside conditions and precipitation context.
 - **Hourly Day Pulse** — the liquid weather widget opens an animated summary of how conditions develop during the day.
+- **macOS desktop widgets** — native small and medium WidgetKit layouts mirror the app's black-glass weather ring and refresh live Berlin conditions in the background.
 - **Outfit guidance** — an offline rules engine always works; optional Gemini advice adds a short natural-language recommendation.
 - **Three languages** — complete English, German and Russian interfaces, including weather conditions and outfit suggestions.
 - **Privacy-conscious** — exact coordinates stay on the Mac. A Gemini key is stored in macOS Keychain and is never committed to the project.
@@ -77,6 +78,7 @@ Navigation, privacy copy, weather labels and outfit guidance all follow the sele
 ## Tech stack
 
 - Swift 5 and SwiftUI
+- WidgetKit with small and medium macOS desktop widgets
 - Core Location and CLGeocoder
 - URLSession with the Open-Meteo REST API
 - Gemini API for optional outfit advice
@@ -104,6 +106,7 @@ Gemini is optional. Add your own API key inside SORAMOYO Settings; the local wea
 
 ```text
 Sources/AuraWeather/   SwiftUI app, weather service and localization
+Widget/                Native macOS WidgetKit extension
 Tests/AuraWeatherTests Local outfit-engine tests
 Assets/                App icon and portfolio screenshots
 Scripts/               Standalone macOS app build helper
