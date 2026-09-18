@@ -5,7 +5,7 @@ struct GeminiAdvisor {
         let prompt = """
         You are a concise personal weather stylist. Based only on this city-level weather summary, give one practical outfit recommendation in English. Keep it under 45 words. No greetings, no emojis, no medical advice. City: \(weather.city). Condition: \(weather.condition). Temperature: \(Int(weather.temperature.rounded()))C, feels like \(Int(weather.feelsLike.rounded()))C, wind \(Int(weather.windSpeed.rounded())) km/h, rain chance \(weather.rainChance)%.
         """
-        let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent")!
+        let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
