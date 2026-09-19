@@ -6,6 +6,10 @@
 
 **SORAMOYO** is a native macOS weather app that combines live local conditions with practical outfit guidance. Its name comes from the Japanese word **空模様** — the look of the sky or the state of the weather. It can use the Mac's location or search by city and district, presents a five-day forecast, and optionally asks Gemini for a concise clothing recommendation.
 
+## Download
+
+Download the latest portfolio build from [GitHub Releases](https://github.com/egpdev/soramoyo/releases/latest). SORAMOYO requires macOS 14 or newer. The downloadable build is signed for development but not notarized for public distribution, so macOS may require **Control-click → Open** on first launch.
+
 ## Highlights
 
 - **Live local weather** — current temperature, feels-like value, precipitation, wind and daily high/low data from Open-Meteo.
